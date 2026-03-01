@@ -5,13 +5,6 @@ m0609를 사용해 Pick2Pack Custom PhoneCase Packagine 프로젝트
 
 ---
 
-## 한눈에 보기 (아키텍처)
-![System Architecture](images/architecture.png)
-
-## 공정 흐름 (Stage 1~5)
-![Stage Flow](images/stage_flow.png)
-
-
 ## 1) 시스템 설계 / 아키텍처 / 플로우 차트
 
 ### 1-1. 시스템 아키텍처(요약)
