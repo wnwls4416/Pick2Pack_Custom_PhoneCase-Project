@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pick2Pack Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .font-title { font-family: 'Black Han Sans', sans-serif; }
+        .gradient-text {
+            background: linear-gradient(to right, #60a5fa, #a78bfa, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .live-indicator {
+            width: 10px; height: 10px;
+            background-color: #10b981;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            animation: pulse-green 2s infinite;
+        }
+        @keyframes pulse-green {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        .danger-pulse {
+            animation: pulse-red 2s infinite;
+        }
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 min-h-screen p-8 text-white">
+    
+    <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-8">
+            <h1 class="font-title text-6xl mb-4 tracking-wider gradient-text">PICK2PACK ANALYTICS</h1>
+            <p class="text-gray-400 text-lg flex justify-center items-center gap-2">
+                <span class="live-indicator"></span> 실시간 데이터 분석 & 주문 모니터링
+            </p>
+        </div>
+
+        <div class="bg-red-900/20 border-2 border-red-600 rounded-3xl p-8 mb-8 text-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-red-600 animate-pulse"></div>
+            <h2 class="text-3xl font-bold text-red-500 mb-2 flex justify-center items-center gap-2">
+                ⚠️ EMERGENCY CONTROL
+            </h2>
+            <p class="text-red-300 mb-6 text-sm">위급 상황 발생 시 아래 버튼을 누르면 로봇이 즉시 정지합니다.</p>
+            
+            <button onclick="sendEmergencyStop()" 
+                class="danger-pulse bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-black text-2xl py-4 px-12 rounded-full transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(220,38,38,0.6)] border-4 border-red-800">
+                🛑 STOP ROBOT (비상 정지)
+            </button>
+        </div>
+
+        <div class="bg-gray-800 border-2 border-blue-600 rounded-3xl p-6 mb-12">
+            <h2 class="text-2xl font-bold text-blue-400 mb-4 text-center">⚙️ SYSTEM CONTROL</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-blue-900/20 p-4 rounded-2xl border border-blue-500/30 text-center">
+                    <p class="text-blue-200 mb-3 text-xs">정지 해제 및 작업을 재개합니다.</p>
+                    <button onclick="sendResume()" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-full transition-all transform hover:scale-105 active:scale-95 w-full border-2 border-blue-400">
+                        ▶️ RESUME (작업 재개)
+                    </button>
+                </div>
+                
+                <div class="bg-orange-900/20 p-4 rounded-2xl border border-orange-500/30 text-center">
+                    <p class="text-orange-200 mb-3 text-xs">안전 잠금을 강제로 해제하고 즉시 복구합니다.</p>
+                    <button onclick="sendSafetyUnlock()" 
+                        class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-full transition-all transform hover:scale-105 active:scale-95 w-full border-2 border-orange-400">
+                        ⚡ FORCE RESUME (강제 재개)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+            <div class="bg-gray-800 p-6 rounded-3xl shadow-xl border border-gray-700">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2">📱 기종 선호도 분석</h2>
+                <div class="relative h-64">
+                    <canvas id="phoneChart"></canvas>
+                </div>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-3xl shadow-xl border border-gray-700">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2">💎 악세서리 인기 트렌드</h2>
+                <div class="relative h-64">
+                    <canvas id="accChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gray-800 rounded-3xl shadow-2xl border border-gray-700 overflow-hidden">
+            <div class="p-6 border-b border-gray-700 bg-gray-800/50 backdrop-blur-sm flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <h2 class="text-2xl font-bold">📋 실시간 주문 내역</h2>
+                    <a href="{{ db_url }}" target="_blank" 
+                       class="text-xs bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-1 px-3 rounded-md transition-colors border border-yellow-500 shadow-md flex items-center gap-1">
+                       🔥 DB Console ↗
+                    </a>
+                </div>
+                <span id="order-count" class="text-sm bg-blue-600 px-3 py-1 rounded-full text-white font-bold shadow-lg">0건</span>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-700/50 text-gray-400 text-sm uppercase tracking-wider">
+                            <th class="p-5 font-bold">시간</th>
+                            <th class="p-5 font-bold">기종</th>
+                            <th class="p-5 font-bold">악세서리</th>
+                            <th class="p-5 font-bold text-right">금액</th>
+                        </tr>
+                    </thead>
+                    <tbody id="order-list" class="divide-y divide-gray-700 text-gray-300">
+                        <tr><td colspan="4" class="p-8 text-center text-gray-500">데이터 대기 중...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let phoneChartInstance = null;
+        let accChartInstance = null;
+
+        function sendEmergencyStop() {
+            if(!confirm("⚠️ 경고: 로봇이 즉시 멈춥니다. 정말 중단하시겠습니까?")) return;
+            fetch('/api/control/emergency', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'stop' }),
+            }).then(res => res.json()).then(data => { if(data.status === 'success') alert("🚨 정지 신호 전송 완료!"); });
+        }
+
+        function sendResume() {
+            if(!confirm("▶️ 작업을 재개하시겠습니까?")) return;
+            fetch('/api/control/resume', { method: 'POST' })
+            .then(res => res.json()).then(data => { if(data.status === 'success') alert("✅ 재개 신호 전송 완료!"); });
+        }
+
+        function sendSafetyUnlock() {
+            if(!confirm("🔓 로봇 안전 잠금을 해제하시겠습니까?")) return;
+            fetch('/api/control/unlock', { method: 'POST' })
+            .then(res => res.json()).then(data => { if(data.status === 'success') alert("🔓 안전 해제 신호 전송 완료!"); });
+        }
+
+        function fetchStatistics() {
+            fetch('/api/statistics').then(res => res.json()).then(data => {
+                if (data.status === 'success') { updatePhoneChart(data.phones); updateAccChart(data.accessories); }
+            });
+        }
+
+        function fetchOrders() {
+            fetch('/api/orders').then(res => res.json()).then(data => {
+                const tbody = document.getElementById('order-list');
+                const countBadge = document.getElementById('order-count');
+                if (data.status === 'success' && data.data) {
+                    countBadge.innerText = data.data.length + "건";
+                    tbody.innerHTML = ''; 
+                    data.data.forEach(order => {
+                        const row = `
+                            <tr class="hover:bg-gray-700/50">
+                                <td class="p-5 text-gray-400 font-mono text-sm">${order.timestamp}</td>
+                                <td class="p-5 font-bold text-white">${order.phone_detail}</td>
+                                <td class="p-5 text-blue-300">${order.acc_detail}</td>
+                                <td class="p-5 text-right font-bold text-emerald-400">${order.total_cost.toLocaleString()}원</td>
+                            </tr>`;
+                        tbody.innerHTML += row;
+                    });
+                }
+            });
+        }
+
+        function updatePhoneChart(data) {
+            const ctx = document.getElementById('phoneChart').getContext('2d');
+            const labels = Object.keys(data);
+            const values = Object.values(data);
+            if (phoneChartInstance) {
+                phoneChartInstance.data.labels = labels;
+                phoneChartInstance.data.datasets[0].data = values;
+                phoneChartInstance.update();
+            } else {
+                phoneChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{ data: values, backgroundColor: ['#3b82f6', '#ec4899', '#8b5cf6'], borderWidth: 0 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: 'white' } } } }
+                });
+            }
+        }
+
+        function updateAccChart(data) {
+            const ctx = document.getElementById('accChart').getContext('2d');
+            const sorted = Object.entries(data).sort((a,b) => b[1] - a[1]);
+            const labels = sorted.map(x => x[0]);
+            const values = sorted.map(x => x[1]);
+            if (accChartInstance) {
+                accChartInstance.data.labels = labels;
+                accChartInstance.data.datasets[0].data = values;
+                accChartInstance.update();
+            } else {
+                accChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: { labels: labels, datasets: [{ data: values, backgroundColor: '#10b981', borderRadius: 5 }] },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { color: '#9ca3af' } }, x: { ticks: { color: 'white' } } }, plugins: { legend: { display: false } } }
+                });
+            }
+        }
+
+        setInterval(() => { fetchStatistics(); fetchOrders(); }, 2000);
+    </script>
+</body>
+</html>

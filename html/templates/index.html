@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로봇팔 폰꾸미기 서비스</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .step-hidden { display: none; }
+        .selected-card { border-color: #2563eb; background-color: #eff6ff; }
+        .progress-bar { transition: width 0.5s ease-in-out; }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .warning-blink { animation: blink 2s infinite; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center font-sans">
+    
+    <audio id="bgm" loop>
+        <source src="{{ url_for('static', filename='GameplayMusic.mp3') }}" type="audio/mpeg">
+    </audio>
+
+    <div class="bg-white p-8 rounded-xl shadow-xl w-full max-w-2xl">
+        
+        <div id="step-1">
+            <h2 class="text-2xl font-bold mb-2 text-center">📱 Step 1. 기종을 선택해주세요</h2>
+            <p class="text-center text-gray-500 mb-6">가격: <span class="font-bold text-blue-600">15,000원</span></p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <button onclick="selectPhone('Galaxy S23', this)" class="phone-card border-2 border-gray-200 p-6 rounded-lg hover:shadow-lg transition"><div class="text-4xl mb-2">🌌</div><div class="font-bold">Galaxy S23</div></button>
+                <button onclick="selectPhone('iPhone 16', this)" class="phone-card border-2 border-gray-200 p-6 rounded-lg hover:shadow-lg transition"><div class="text-4xl mb-2">🍎</div><div class="font-bold">iPhone 16</div></button>
+                <button onclick="selectPhone('iPhone 14 Pro', this)" class="phone-card border-2 border-gray-200 p-6 rounded-lg hover:shadow-lg transition"><div class="text-4xl mb-2">🍎</div><div class="font-bold">iPhone 14 Pro</div></button>
+            </div>
+            <div class="text-center"><button id="btn-step1" onclick="goToStep(2)" disabled class="bg-gray-300 text-white px-8 py-3 rounded-full font-bold">다음 단계로</button></div>
+        </div>
+
+        <div id="step-2" class="step-hidden">
+            <h2 class="text-2xl font-bold mb-2 text-center">✨ Step 2. 꾸미기 재료 선택</h2>
+            <p class="text-gray-500 text-center mb-6">총 3개 선택 (비즈 필수)</p>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+                <label class="cursor-pointer relative group"><input type="checkbox" value="비즈" checked disabled class="acc-checkbox peer sr-only"><div class="border-2 border-gray-200 rounded-xl p-4 peer-checked:border-blue-500 peer-checked:bg-blue-50 transition hover:shadow-md text-center h-full flex flex-col justify-center"><div class="text-5xl mb-3">💎</div><div class="font-bold text-gray-700">비즈 (필수)</div><div class="text-sm font-bold text-blue-600 mt-1">5,000원</div></div></label>
+                <label class="cursor-pointer relative group"><input type="checkbox" value="마스킹테이프1" onchange="checkLimit(this)" class="acc-checkbox peer sr-only"><div class="border-2 border-gray-200 rounded-xl p-4 peer-checked:border-blue-500 peer-checked:bg-blue-50 transition hover:shadow-md text-center h-full flex flex-col justify-center"><div class="text-5xl mb-3">🧻</div><div class="font-medium text-gray-700">마스킹 테이프1</div><div class="text-sm font-bold text-blue-600 mt-1">4,000원</div></div></label>
+                <label class="cursor-pointer relative group"><input type="checkbox" value="마스킹테이프2" onchange="checkLimit(this)" class="acc-checkbox peer sr-only"><div class="border-2 border-gray-200 rounded-xl p-4 peer-checked:border-blue-500 peer-checked:bg-blue-50 transition hover:shadow-md text-center h-full flex flex-col justify-center"><div class="text-5xl mb-3">📜</div><div class="font-medium text-gray-700">마스킹 테이프2</div><div class="text-sm font-bold text-blue-600 mt-1">4,000원</div></div></label>
+                <label class="cursor-pointer relative group"><input type="checkbox" value="그립톡" onchange="checkLimit(this)" class="acc-checkbox peer sr-only"><div class="border-2 border-gray-200 rounded-xl p-4 peer-checked:border-blue-500 peer-checked:bg-blue-50 transition hover:shadow-md text-center h-full flex flex-col justify-center"><div class="text-5xl mb-3">🔘</div><div class="font-medium text-gray-700">그립톡</div><div class="text-sm font-bold text-blue-600 mt-1">10,000원</div></div></label>
+                <label class="cursor-pointer relative group"><input type="checkbox" value="스트랩" onchange="checkLimit(this)" class="acc-checkbox peer sr-only"><div class="border-2 border-gray-200 rounded-xl p-4 peer-checked:border-blue-500 peer-checked:bg-blue-50 transition hover:shadow-md text-center h-full flex flex-col justify-center"><div class="text-5xl mb-3">📿</div><div class="font-medium text-gray-700">스트랩</div><div class="text-sm font-bold text-blue-600 mt-1">14,000원</div></div></label>
+                <label class="cursor-pointer relative group"><input type="checkbox" value="카드지갑" onchange="checkLimit(this)" class="acc-checkbox peer sr-only"><div class="border-2 border-gray-200 rounded-xl p-4 peer-checked:border-blue-500 peer-checked:bg-blue-50 transition hover:shadow-md text-center h-full flex flex-col justify-center"><div class="text-5xl mb-3">💳</div><div class="font-medium text-gray-700">카드지갑</div><div class="text-sm font-bold text-blue-600 mt-1">18,000원</div></div></label>
+            </div>
+            <div class="text-center"><button id="btn-step2" onclick="goToStep(3)" disabled class="bg-gray-300 text-white px-8 py-3 rounded-full font-bold">선택 완료</button></div>
+        </div>
+
+        <div id="step-3" class="step-hidden">
+            <h2 class="text-2xl font-bold mb-6 text-center">✅ 주문 확인</h2>
+            <div class="bg-gray-100 p-6 rounded-lg mb-8 space-y-4">
+                <div class="flex justify-between border-b pb-2 border-gray-300"><span class="text-gray-600">기종</span><span id="confirm-phone" class="font-bold text-gray-800"></span></div>
+                <div><span class="text-gray-600 block mb-2">악세서리</span><ul id="confirm-acc-list" class="space-y-1 text-sm text-gray-700"></ul></div>
+                <div class="pt-4 border-t-2 border-gray-300 flex justify-between items-center mt-4"><span class="text-xl font-bold text-gray-800">총 결제 금액</span><span id="total-price" class="text-3xl font-bold text-blue-600"></span></div>
+            </div>
+            <div class="text-center"><button onclick="startRobot()" class="bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 rounded-full font-bold text-xl shadow-lg transform hover:scale-105">결제하고 로봇 시작하기 🤖</button></div>
+        </div>
+
+        <div id="step-4" class="step-hidden text-center">
+            <h2 class="text-2xl font-bold mb-4">🚧 로봇이 작업 중입니다</h2>
+            <div class="text-6xl mb-6" id="status-icon">🤖</div>
+            <p id="status-text" class="text-xl font-bold text-blue-600 mb-4">대기 중...</p>
+            <div class="w-full bg-gray-200 rounded-full h-6 mb-4 overflow-hidden">
+                <div id="progress-bar" class="progress-bar bg-blue-600 h-6 rounded-full text-xs font-medium text-blue-100 text-center p-0.5 leading-none" style="width: 0%"> 0%</div>
+            </div>
+            <p id="warning-text" class="text-sm text-red-500 font-bold warning-blink mb-8">⛔ 경고: 작업 중에는 로봇에게 절대 다가가지 마시오.</p>
+
+            <button id="btn-reset" onclick="location.reload()" class="hidden bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-full font-bold shadow-lg transform hover:scale-105 transition">
+                처음으로 (재주문)
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('click', function() {
+            var audio = document.getElementById("bgm");
+            if (audio.paused) { audio.volume = 0.5; audio.play().catch(e => console.log(e)); }
+        }, { once: true });
+
+        const priceList = {'PhoneCase':15000, '비즈':5000, '마스킹테이프1':4000, '마스킹테이프2':4000, '그립톡':10000, '스트랩':14000, '카드지갑':18000};
+        let userPhone="", userAccessories=[], totalPrice=0;
+        let monitorInterval = null;
+
+        function selectPhone(m,e){ userPhone=m; document.querySelectorAll('.phone-card').forEach(b=>b.classList.remove('selected-card')); e.classList.add('selected-card'); document.getElementById('btn-step1').disabled=false; document.getElementById('btn-step1').className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-bold transition"; }
+        function goToStep(n){ document.querySelectorAll('[id^="step-"]').forEach(d=>d.classList.add('step-hidden')); document.getElementById('step-'+n).classList.remove('step-hidden'); if(n===3) updateConfirmation(); }
+        function checkLimit(c){ 
+            const chk=document.querySelectorAll('.acc-checkbox:checked'); const btn=document.getElementById('btn-step2');
+            if(chk.length>3){ c.checked=false; alert("3개까지 선택 가능"); return; }
+            if(chk.length===3){ btn.disabled=false; btn.className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-bold transition"; }
+            else{ btn.disabled=true; btn.className="bg-gray-300 text-white px-8 py-3 rounded-full font-bold"; }
+        }
+        function updateConfirmation(){
+            document.getElementById('confirm-phone').innerText=userPhone; const list=document.getElementById('confirm-acc-list'); list.innerHTML=""; totalPrice=priceList['PhoneCase']; userAccessories=[];
+            document.querySelectorAll('.acc-checkbox:checked').forEach(b=>{ userAccessories.push(b.value); totalPrice+=priceList[b.value]||0; list.innerHTML+=`<li class="flex justify-between"><span>${b.value}</span><span class="font-bold">${(priceList[b.value]||0).toLocaleString()}원</span></li>`; });
+            document.getElementById('total-price').innerText=totalPrice.toLocaleString()+"원";
+        }
+        function startRobot(){
+            fetch('/order', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({phone:userPhone, accessories:userAccessories, total_cost:totalPrice}) })
+            .then(r=>r.json()).then(d=>{ if(d.status==='success') { goToStep(4); monitorInterval = setInterval(checkStatus, 1000); } });
+        }
+
+        function checkStatus(){
+            fetch('/status').then(r=>r.json()).then(data => {
+                const percent = data.progress;
+                const msg = data.message;
+                const bar = document.getElementById('progress-bar');
+                const statusText = document.getElementById('status-text');
+                const statusIcon = document.getElementById('status-icon');
+                const resetBtn = document.getElementById('btn-reset');
+                const warningText = document.getElementById('warning-text');
+
+                if(percent !== -1) statusText.innerText = msg;
+
+                // [리셋 상태 (-1) 감지]
+                if(percent === -1){
+                    clearInterval(monitorInterval);
+                    bar.style.width = '0%'; bar.innerText = 'Reset';
+                    bar.className = "progress-bar bg-red-500 h-6 rounded-full text-xs font-medium text-white text-center p-0.5 leading-none";
+                    statusIcon.innerText = "🔄";
+                    statusText.className = "text-xl font-bold text-red-600 mb-4 warning-blink";
+                    statusText.innerText = "⚠️ 시스템이 초기화되었습니다. 다시 주문해주세요.";
+                    warningText.classList.add('hidden');
+                    
+                    resetBtn.classList.remove('hidden');
+                    resetBtn.innerText = "처음으로 (재주문)";
+                    resetBtn.className = "bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-full font-bold shadow-lg transform hover:scale-105 transition";
+                }
+                // [완료 상태]
+                else if(percent >= 100){
+                    clearInterval(monitorInterval);
+                    bar.style.width = '100%'; bar.innerText = '100%';
+                    statusIcon.innerText = "🎁";
+                    statusText.className = "text-xl font-bold text-green-600 mb-4";
+                    statusText.innerText = "작업이 완료되었습니다! 물건을 가져가세요.";
+                    warningText.classList.add('hidden');
+                    
+                    resetBtn.classList.remove('hidden');
+                    resetBtn.innerText = "처음으로 돌아가기";
+                    resetBtn.className = "bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-full font-bold shadow-lg transform hover:scale-105 transition";
+                }
+                else {
+                    bar.style.width = percent + '%'; bar.innerText = percent + '%';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
